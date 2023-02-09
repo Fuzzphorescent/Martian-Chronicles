@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(657, 579)
@@ -193,6 +194,9 @@ class Ui_MainWindow(object):
         self.Camera.setObjectName("Camera")
         self.CameraSelector = QtWidgets.QComboBox(self.centralwidget)
         self.CameraSelector.setGeometry(QtCore.QRect(390, 104, 86, 25))
+
+        
+
         font = QtGui.QFont()
         font.setFamily("Roboto Slab")
         font.setPointSize(13)
@@ -210,9 +214,6 @@ class Ui_MainWindow(object):
         self.CameraSelector.addItem("")
         self.CameraSelector.setItemText(7, "")
         self.DateSelector = QtWidgets.QDateEdit(self.centralwidget)
-        
-        earthDate = self.DateSelector.date().toPyDate()
-        print(earthDate)
 
         self.DateSelector.setGeometry(QtCore.QRect(370, 64, 110, 26))
         font = QtGui.QFont()
@@ -224,7 +225,7 @@ class Ui_MainWindow(object):
         self.DateSelector.setObjectName("DateSelector")
         self.Load = QtWidgets.QPushButton(self.centralwidget)
         self.Load.setGeometry(QtCore.QRect(270, 144, 131, 25))
-        self.Load.clicked.connect(self.load)
+        self.Load.clicked.connect(lambda: self.load(self.DateSelector, self.CameraSelector))
 
         font = QtGui.QFont()
         font.setFamily("Roboto Slab")
@@ -299,9 +300,14 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-    def load(self):
+    def load(self, DS, CS):
         print("Loaded")
-        # load images
+        Date = str(DS.date().toPyDate())
+        earthDate = Date[:4] + Date[7:] + Date[4:7]
+        print(earthDate)
+        camera = CS.currentText()
+        print(camera)
+        # pass parameters to API
 
     def next(self):
         print("Next")
