@@ -1,15 +1,25 @@
 import requests
 import json
 import Constants
-
 import ezgmail, os
-os.chdir(r'C:\path\to\credentials_json_file')
+os.chdir(r'./')
 ezgmail.init()
+import urllib.request
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QPixmap
 
 
 class Ui_MainWindow(object):
+
+    photoLinks = []
+    pos = 0
+    loaded = []
+    centralwidget = None
+    emailid = ''
+    subject = ''
+    emailbody = ''
+    emages = []
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -169,8 +179,20 @@ class Ui_MainWindow(object):
         brush.setStyle(QtCore.Qt.SolidPattern)
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.PlaceholderText, brush)
         MainWindow.setPalette(palette)
+        self.mypopup = QtWidgets.QMainWindow()
+        self.popupcontent = QtWidgets.QWidget(self.mypopup)
+        self.popupcontent = QtWidgets.QWidget(MainWindow)
+        self.popupcontent.setObjectName("popupcontent")
+        self.popupcontent.setGeometry(QtCore.QRect(210, 44, 131, 61))
+        self.popupcontent.setWindowTitle("Something")
+        self.mypopup.setCentralWidget(self.popupcontent)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+        self.centralwidget.setGeometry(QtCore.QRect(210, 44, 131, 61))
+        self.centralwidget.setWindowTitle("Something")
+        self.messagebox = QtWidgets.QMessageBox()
+        self.messagebox.setText("Something")
+        self.messagebox.setWindowTitle("Something")
         self.EarthDate = QtWidgets.QLabel(self.centralwidget)
         self.EarthDate.setGeometry(QtCore.QRect(210, 44, 131, 61))
         font = QtGui.QFont()
@@ -179,6 +201,7 @@ class Ui_MainWindow(object):
         font.setBold(True)
         font.setWeight(75)
         self.EarthDate.setFont(font)
+        self.centralwidget.setFont(font)
         self.EarthDate.setObjectName("EarthDate")
         self.Camera = QtWidgets.QLabel(self.centralwidget)
         self.Camera.setGeometry(QtCore.QRect(210, 104, 81, 17))
@@ -297,6 +320,11 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+    def fetch(self):
+        global photoLinks
+        urllib.request.urlretrieve(self.photoLinks[self.pos + 5], "%s.jpg" % (self.pos + 5))
+        
+
     def load(self, DS, CS):
 
         # retrieve json from API
@@ -305,32 +333,63 @@ class Ui_MainWindow(object):
         camera = CS.currentText()
         key = Constants.NASA_API_KEY
         link = 'https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?api_key=' + key + '&earth_date=' + earthDate + '&name=' + camera
-        photoLinks = []
         print(link)
         Result = json.loads(requests.get(link).text)
 
-        # load 5 images in cache
+        # store image links
 
         n = len(Result['photos'])
         print(n)
+        global photoLinks
+        global pos
+        global loaded
         for i in range(n):
-            photoLinks.append(Result['photos'][i]["img_src"])
-        print(photoLinks)
+            self.photoLinks.append(Result['photos'][i]["img_src"])
+        print(self.photoLinks[0])
+    
+        # download first five images
+        n = min(len(self.photoLinks), 5)
+        for i in range(n):
+            self.pos += 1
+            self.loaded.append(self.pos)
+            self.fetch()
 
         # display first image
+        self.display()
+
 
     def next(self):
         print("Next")
-        # display next image
-        # load one more image in cache
+        global pos
+        if self.pos < len(self.photoLinks - 1):
+            self.pos += 1
+            # display next image
+            self.display()
+            # load one more image
+            if pos != len(self.photoLinks - 7) and pos not in self.loaded:
+               fetch()
+        
 
     def previous(self):
         print("Button")
-        # go to previous image
+        global pos
+        if self.pos > 0:
+            self.pos -= 1
+            # display previous image
+            self.display()
 
     def share(self):
         print("Share")
         # prompt open email widget
+        self.popupcontent.show()
+        print("Hello")
+    
+    def email(self):
+        ezgmail.send(self.emailid, self.subject, self.emailbody, self.emages)
+
+    def display(self):
+        self.im = QPixmap("%s.jpg" % self.pos)
+        self.Image.setPixmap(self.im)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -351,11 +410,17 @@ class Ui_MainWindow(object):
         self.Image.setText(_translate("MainWindow", "TextLabel"))
         self.Title.setText(_translate("MainWindow", "Curiosity Rover Images"))
 
+    def email(self):
+        for i in range(len(self.photoLinks)):
+            urllib.request.urlretrieve(self.photoLinks[i], "00000001.jpg")
+
+
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
+    # ui.centralwidget.show()
     MainWindow.show()
     sys.exit(app.exec_())
